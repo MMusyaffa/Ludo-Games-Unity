@@ -1,0 +1,52 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+UserSettings/
+
+# Asset Store tools
+Assets/AssetStoreTools*
+
+# Unity auto-generated files
+*.pidb
+*.user
+*.suo
+*.userprefs
+*.unityproj
+*.dll.mdb
+*.exe.mdb
+*.svd
+
+# Visual Studio cache
+.vs/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+
+# JetBrains Rider cache
+.idea/
+*.sln.iml
+
+# Builds
+*.apk
+*.aab
+*.unitypackage
+
+# Crash and error logs
+sysinfo.txt
+*.stacktrace
+
+# Gradle cache
+.gradle/
