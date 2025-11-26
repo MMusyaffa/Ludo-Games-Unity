@@ -1,6 +1,7 @@
 using LudoGames.Types.Coordinates;
 using LudoGames.Enums.PawnStates;
 using LudoGames.Interface.Pawns;
+using System;
 
 namespace LudoGames.Models.Pawns
 {
