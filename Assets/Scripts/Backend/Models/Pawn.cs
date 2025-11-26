@@ -20,7 +20,7 @@ namespace LudoGames.Models.Pawns
 
         public override string ToString()
         {
-            return $"Pawn at {Coordinate}";
+            return $"at {Coordinate} is {PawnStatesEnum}";
         }
     }
 }

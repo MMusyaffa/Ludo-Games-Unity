@@ -1,28 +1,49 @@
 using UnityEngine;
-using LudoGames.Enums.PawnStates;
-using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
 using LudoGames.Games.GameController;
-using LudoGames.Models.Player;
 using TMPro;
-using LudoGames.Models.Pawns;
+using LudoGames.Unity.Pawns;
 
-namespace LudoGames.Unity.GameManager
+namespace LudoGames.Unity.GameManagers
 {
     public class GameManager : MonoBehaviour
     {
-        private GameController _game;
-        public TMP_InputField playerNameInput;
+        public static GameManager Instance { get; private set; } 
+        internal GameController _game {get; private set; }
+        [SerializeField] private TMP_InputField _playerNameInput;
+        [SerializeField] private TextMeshProUGUI _diceNumberUI;
+        [SerializeField] private TextMeshProUGUI _currentPlayerUI;
+        [SerializeField] private TextMeshProUGUI _player1Name;
+        [SerializeField] private TextMeshProUGUI _player2Name;
+        [SerializeField] private TextMeshProUGUI _player3Name;
+        [SerializeField] private TextMeshProUGUI _player4Name;
+        public int diceNumberResult = 0;
 
-        void Start()
+        void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
             _game = new GameController();
+            diceNumberResult = _game.diceNumber;
+            _diceNumberUI.text = $"{diceNumberResult}";
+            _player1Name.text = $"";
+            _player2Name.text = $"";
+            _player3Name.text = $"";
+            _player4Name.text = $"";
+
             Debug.Log("Game Started");
         }
 
         public void AddPlayerButton()
         {
-            string name = playerNameInput.text.Trim();
+            string name = _playerNameInput.text.Trim();
 
             if (string.IsNullOrEmpty(name))
             {
@@ -33,8 +54,8 @@ namespace LudoGames.Unity.GameManager
             if (_game.Players.Count < 4)
             {
                 _game.AddNewPlayer(name);
-                Debug.Log($"New Player {name} Added");
-                playerNameInput.text = "";
+                Debug.Log($"New Player {name} Added, Path {_game.PlayerPaths}");
+                _playerNameInput.text = "";
             }
             else
             {
@@ -57,16 +78,26 @@ namespace LudoGames.Unity.GameManager
             }
 
             _game.AssignFirstPlayerTurn();
+            _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";            
+
+            _player1Name.text = _game.Players.Count > 0 ? _game.Players[0].Name : "";
+            _player2Name.text = _game.Players.Count > 1 ? _game.Players[1].Name : "";
+            _player3Name.text = _game.Players.Count > 2 ? _game.Players[2].Name : "";
+            _player4Name.text = _game.Players.Count > 3 ? _game.Players[3].Name : "";
         }
 
         public void RollDice()
         {
-            IPlayer currentPlayer = _game._currentPlayerTurn;
-            int num = _game.RollDice();
+            IPlayer currentPlayer = _game.currentPlayerTurn;
 
-            if(!_game.CanPawnMove(currentPlayer, num))
+            diceNumberResult = _game.RollDice();;
+            _diceNumberUI.text = $"{diceNumberResult}";
+            Debug.Log($"Dice Rolled: {diceNumberResult}");
+
+            if(!_game.CanPlayerMovePawn(currentPlayer, diceNumberResult))
             {
                 _game.NextTurn();
+                _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";
                 return;
             }
 
@@ -97,14 +128,16 @@ namespace LudoGames.Unity.GameManager
 
         public void TestMove()
         {
-            var player = _game._currentPlayerTurn;
+            var player = _game.currentPlayerTurn;
             var pawns = _game.PlayerPawns[player];
-            int diceNumber = 6;
             int pawnIndex = 2;
 
             var pawn = pawns[pawnIndex];
+            // pawn.PositionIndex = 1;
+            // GameController.OnMovedPawn?.Invoke(pawn);
 
-            _game.MovePawn(player, pawn, diceNumber);
+            _game.MovePawn(player, pawn, 1);
+            // _game.MovePawn(player, pawn, diceNumberResult);
         }
     }
 }

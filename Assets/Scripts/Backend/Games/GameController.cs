@@ -30,15 +30,15 @@ namespace LudoGames.Games.GameController
         public List<Coordinate> PathB { get; private set; }
         public List<Coordinate> PathC { get; private set; }
         public List<Coordinate> PathD { get; private set; }
-        public IPlayer _currentPlayerTurn {get; private set; }
+        public IPlayer currentPlayerTurn {get; private set; }
         private ITile[,] _tiles;
         private IDice _dice;
-        private int _diceNumber = 0;
+        public int diceNumber { get; private set; } = 0;
         private HashSet<Coordinate> _homeAndSafeZone;
         private readonly System.Random _random = new();
-        public static PathAdd makePath;
-        public static Action<IPawn> OnSpawnPawn;
-        public static Action<IPawn> OnMovedPawn;
+        // public static PathAdd makePath;
+        public Action<IPlayer, IPawn> OnSpawnedPawn;
+        public Action<IPawn> OnMovedPawn;
 
         public GameController()
         {
@@ -52,22 +52,20 @@ namespace LudoGames.Games.GameController
             _dice = new Dice(6);
             _homeAndSafeZone = new HashSet<Coordinate>();
 
-            
-
             Debug.Log($"Board size: {_tiles.GetLength(0)} x {_tiles.GetLength(1)}\n");
 
-            PathA = MakeAPath();
-            PathB = MakeBPath();
-            PathC = MakeCPath();
-            PathD = MakeDPath();
+            PathA = MakePathA();
+            PathB = MakePathB();
+            PathC = MakePathC();
+            PathD = MakePathD();
         }
 
-        private List<Coordinate> MakeAPath()
+        private List<Coordinate> MakePathA()
         {
             List<Coordinate> pathA = new List<Coordinate>();
 
-            for (int x = 1; x <= 5; x++) { pathA.Add(_tiles[x, 6].Coordinate); makePath?.Invoke(_tiles[x,6].Coordinate); }
-            for (int y = 5; y >= 0; y--) { pathA.Add(_tiles[6, y].Coordinate); makePath?.Invoke(_tiles[6,y].Coordinate);}
+            for (int x = 1; x <= 5; x++) { pathA.Add(_tiles[x, 6].Coordinate); }
+            for (int y = 5; y >= 0; y--) { pathA.Add(_tiles[6, y].Coordinate); }
             pathA.Add(_tiles[7,0].Coordinate);
 
             for (int y = 0; y <= 5; y++) { pathA.Add(_tiles[8, y].Coordinate); }
@@ -86,7 +84,7 @@ namespace LudoGames.Games.GameController
             return pathA;
         }
 
-        private List<Coordinate> MakeBPath()
+        private List<Coordinate> MakePathB()
         {
             List<Coordinate> pathB = new List<Coordinate>();
 
@@ -110,7 +108,7 @@ namespace LudoGames.Games.GameController
             return pathB;
         }
 
-        private List<Coordinate> MakeCPath()
+        private List<Coordinate> MakePathC()
         {
             List<Coordinate> pathC = new List<Coordinate>();
 
@@ -134,7 +132,7 @@ namespace LudoGames.Games.GameController
             return pathC;
         }
 
-        private List<Coordinate> MakeDPath()
+        private List<Coordinate> MakePathD()
         {
             List<Coordinate> pathD = new List<Coordinate>();
 
@@ -165,16 +163,21 @@ namespace LudoGames.Games.GameController
             
             if (Players.Contains(player)) return false;
 
-            List<Coordinate> playerPath = PathPlayerOrder();
-            var pawns = CreatePlayerPawn(playerPath);
-
             Players.Add(player);
+            List<Coordinate> playerPath = PathPlayerOrder(player);
+            var pawns = CreatePlayerPawn(player, playerPath);
+
             player.ColorEnum = playerColor;
             PlayerScores[player] = 0;
             PlayerPawns[player] = pawns;
             PlayerPaths[player] = playerPath;
 
-            if (_currentPlayerTurn == null) { _currentPlayerTurn = player; }
+            foreach (var pawn in pawns)
+            {
+                OnSpawnedPawn?.Invoke(player, pawn);
+            }
+
+            if (currentPlayerTurn == null) { currentPlayerTurn = player; }
 
             return true;
         }
@@ -184,72 +187,37 @@ namespace LudoGames.Games.GameController
             if (Players.Count == 0) { Debug.Log("Belum ada pemain");}
 
             int playerTurnOrder = _random.Next(Players.Count);
-            _currentPlayerTurn = Players[playerTurnOrder];
+            currentPlayerTurn = Players[playerTurnOrder];
 
-            Debug.Log($"Giliran pemain {_currentPlayerTurn.Name} untuk jalan");
+            Debug.Log($"Giliran pemain {currentPlayerTurn.Name} untuk jalan");
         }   
 
         public int RollDice()
         {
-            // while(true)
-            // {
-            //     Console.Write("Lempar dadu? (y): ");
-            //     // string input = Console.ReadLine()!;
+            diceNumber = _random.Next(1, _dice.Sides + 1);
+            // diceNumber = 6;
 
-            //     if (input?.ToLower() != "y") 
-            //     { 
-            //         Debug.Log("Masukan y");
-            //         continue;
-            //     }
-
-            // }
-                _diceNumber = _random.Next(1, _dice.Sides + 1);
-                // _diceNumber = 6;
-
-                Console.Write($"Dice Rolled: {_diceNumber}\n");
-                return _diceNumber;
+            return diceNumber;
         }
 
-        public IPawn SelectPawn(IPlayer player, int diceResult)
+        public IPawn SelectPawn(IPlayer player, int diceResult, int pawnIndex)
         {
             var pawns = PlayerPawns[player];
-
-            Debug.Log($"{player.Name} - Pilih pawn untuk dijalankan: ");
-            for (int i = 0; i < pawns.Count; i++)
+            var pawn = pawns[pawnIndex];
+            
+            if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome && diceResult != 6)
             {
-                Debug.Log($"{i + 1}. Pawn {i + 1} - Posisi: {pawns[i].Coordinate}");
+                Debug.Log("Tidak bisa keluar home.");
+            }
+            else if (pawn.PawnStatesEnum == PawnStatesEnum.Finished)
+            {
+                Debug.Log("Sudah finish, pilih pawn lain.");
             }
 
-            while(true)
-            {
-                Console.Write("Masukan nomor pawn: ");
-
-                if (int.TryParse(Console.ReadLine(), out int selectedPawn))
-                {
-                    selectedPawn -= 1;
-                    if (selectedPawn >= 0 && selectedPawn < pawns.Count)
-                    {
-                        var pawn = pawns[selectedPawn];
-
-                        if(pawn.PawnStatesEnum == PawnStatesEnum.AtHome && diceResult != 6)
-                        {
-                            Debug.Log("Tidak bisa keluar home.");
-                            continue;
-                        }
-                        else if(pawn.PawnStatesEnum == PawnStatesEnum.Finished)
-                        {
-                            Debug.Log("Sudah finish, pilih pawn lain.");
-                            continue;
-                        }
-
-                        return pawns[selectedPawn];
-                    }
-                }
-                Debug.Log("Pilihan tidak valid! Coba lagi.");
-            }
+            return pawns[pawnIndex];
         }
 
-        public bool CanPawnMove(IPlayer player, int diceResult)
+        public bool CanPlayerMovePawn(IPlayer player, int diceResult)
         {
             bool allPawnsHome = IsAllPawnsAtHome(player);
             bool isIsAnyPawnOnBoard = IsAnyPawnOnBoard(player);
@@ -316,10 +284,10 @@ namespace LudoGames.Games.GameController
 
         public void NextTurn()
         {
-            int currentPlayerIndex = Players.IndexOf(_currentPlayerTurn!);
-            _currentPlayerTurn = Players[(currentPlayerIndex + 1) % Players.Count];
+            int currentPlayerIndex = Players.IndexOf(currentPlayerTurn!);
+            currentPlayerTurn = Players[(currentPlayerIndex + 1) % Players.Count];
 
-            Debug.Log($"\nGiliran pemain {_currentPlayerTurn.Name} untuk jalan");
+            Debug.Log($"\nGiliran pemain {currentPlayerTurn.Name} untuk jalan");
         }
 
         private ColorsEnum AssignColorForPlayer(IPlayer player)
@@ -336,26 +304,21 @@ namespace LudoGames.Games.GameController
             };
         }
 
-        private bool IsColorTaken(ColorsEnum color)
+        private List<Coordinate> PathPlayerOrder(IPlayer player)
         {
-            return Players.Any(p => p.ColorEnum == color);
-        }
-
-        private List<Coordinate> PathPlayerOrder()
-        {
-            int playerIndex = Players.Count; 
+            int playerIndex = Players.IndexOf(player); 
             
             return playerIndex switch
             {
-                0 => PathA,
+                0 => PathD,
                 1 => PathA,
-                2 => PathA,
+                2 => PathB,
                 3 => PathC,
                 _ => throw new NotImplementedException(),
             };
         }
         
-        private List<IPawn> CreatePlayerPawn(List<Coordinate> coordinate)
+        private List<IPawn> CreatePlayerPawn(IPlayer player, List<Coordinate> coordinate)
         {
             var pawns = new List<IPawn>();
             
@@ -363,7 +326,7 @@ namespace LudoGames.Games.GameController
             {
                 var newPawn = new Pawn ((coordinate[0]), PawnStatesEnum.AtHome, 0);
                 pawns.Add(newPawn);
-                OnSpawnPawn?.Invoke(newPawn);
+                // OnSpawnedPawn?.Invoke(player, newPawn);
             }
 
             return pawns;
@@ -440,7 +403,12 @@ namespace LudoGames.Games.GameController
 
         // public IPlayer GetCurrentPlayerTurn()
         // {
-        //     return _currentPlayerTurn!;
+        //     return currentPlayerTurn!;
+        // }
+
+        // public IReadOnlyDictionary<IPlayer, List<IPawn>> GetPlayerPawns()
+        // {
+        //     return PlayerPawns;
         // }
     }
 }

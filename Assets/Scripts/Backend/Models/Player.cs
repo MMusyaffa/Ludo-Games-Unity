@@ -25,5 +25,10 @@ namespace LudoGames.Models.Player
         {
             return HashCode.Combine(Name, ColorEnum);
         }
+
+        public override string ToString()
+        {
+            return $"{Name}";
+        }
     }
 }
