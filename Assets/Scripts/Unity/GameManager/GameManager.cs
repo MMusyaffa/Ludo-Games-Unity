@@ -1,8 +1,10 @@
 using UnityEngine;
+using TMPro;
+using LudoGames.Enums.PawnStates;
 using LudoGames.Interface.Players;
 using LudoGames.Games.GameController;
-using TMPro;
-using LudoGames.Unity.Pawns;
+using LudoGames.Unity.UI;
+using LudoGames.Unity.Menus;
 
 namespace LudoGames.Unity.GameManagers
 {
@@ -10,8 +12,12 @@ namespace LudoGames.Unity.GameManagers
     {
         public static GameManager Instance { get; private set; } 
         internal GameController _game {get; private set; }
+        [SerializeField] private UIManager _uiManager;
+        [SerializeField] private SfxManager sfxManager;
         [SerializeField] private TMP_InputField _playerNameInput;
         [SerializeField] private TextMeshProUGUI _diceNumberUI;
+        public bool isPawnAlreadyMoved = false;
+        public bool isDiceRolled = false;
         [SerializeField] private TextMeshProUGUI _currentPlayerUI;
         [SerializeField] private TextMeshProUGUI _player1Name;
         [SerializeField] private TextMeshProUGUI _player2Name;
@@ -54,8 +60,14 @@ namespace LudoGames.Unity.GameManagers
             if (_game.Players.Count < 4)
             {
                 _game.AddNewPlayer(name);
-                Debug.Log($"New Player {name} Added, Path {_game.PlayerPaths}");
                 _playerNameInput.text = "";
+                
+                Debug.Log($"New Player {name} Added, Path {_game.PlayerPaths}");
+
+                _uiManager.player1NameUI.text = _game.Players.Count > 0 ? _game.Players[0].Name : "";
+                _uiManager.player2NameUI.text = _game.Players.Count > 1 ? _game.Players[1].Name : "";
+                _uiManager.player3NameUI.text = _game.Players.Count > 2 ? _game.Players[2].Name : "";
+                _uiManager.player4NameUI.text = _game.Players.Count > 3 ? _game.Players[3].Name : "";
             }
             else
             {
@@ -78,7 +90,9 @@ namespace LudoGames.Unity.GameManagers
             }
 
             _game.AssignFirstPlayerTurn();
-            _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";            
+            _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";
+            isPawnAlreadyMoved = false;     
+            isDiceRolled = false;
 
             _player1Name.text = _game.Players.Count > 0 ? _game.Players[0].Name : "";
             _player2Name.text = _game.Players.Count > 1 ? _game.Players[1].Name : "";
@@ -92,52 +106,68 @@ namespace LudoGames.Unity.GameManagers
 
             diceNumberResult = _game.RollDice();;
             _diceNumberUI.text = $"{diceNumberResult}";
+            isPawnAlreadyMoved = false;
+            isDiceRolled = true;
+            sfxManager.PlayDiceClip();
+
             Debug.Log($"Dice Rolled: {diceNumberResult}");
 
             if(!_game.CanPlayerMovePawn(currentPlayer, diceNumberResult))
             {
-                _game.NextTurn();
-                _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";
+                NextTurn();
                 return;
             }
+        }
 
-            // IPawn pawn = _game.SelectPawn(currentPlayer, num);
+        public void ControlMovePawn(int pawnIndex)
+        {
+            var player = _game.currentPlayerTurn;
 
-            // if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome)
-            // {
-            //     if (num == 6)
-            //     {
-            //         Debug.Log("Pawn keluar dari home");
-            //         pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
-            //     }
-            //     else
-            //     {
-            //         _game.NextTurn();
-            //     }
-            // }
-            // else
-            // {
-            //     _game.MovePawn(currentPlayer, pawn, num);
+            var pawn = _game.SelectPawn(player, diceNumberResult, pawnIndex);
 
-            //     if(num != 6) 
-            //     { 
-            //         _game.NextTurn(); 
-            //     }
-            // }
+            if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome)
+            {
+                if (diceNumberResult == 6)
+                {
+                    isPawnAlreadyMoved = true;
+                    pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
+                    _game.MovePawn(player, pawn, 0);
+                    sfxManager.PlayPawnClip();
+                    
+                    Debug.Log("Pawn keluar dari home");
+
+                    return;
+                }
+            }
+            else
+            {
+                _game.MovePawn(player, pawn, diceNumberResult);
+                isPawnAlreadyMoved = true;
+                sfxManager.PlayPawnClip();
+
+                if (diceNumberResult != 6)
+                {
+                    NextTurn();
+                    return;
+                }
+            }
+        }
+
+        private void NextTurn()
+        {
+            _game.NextTurn();
+            _currentPlayerUI.text = $"{_game.currentPlayerTurn.Name}";
+            // isPawnAlreadyMoved = false;
+            isDiceRolled = false;
         }
 
         public void TestMove()
         {
             var player = _game.currentPlayerTurn;
             var pawns = _game.PlayerPawns[player];
-            int pawnIndex = 2;
-
-            var pawn = pawns[pawnIndex];
-            // pawn.PositionIndex = 1;
-            // GameController.OnMovedPawn?.Invoke(pawn);
+            var pawn = pawns[2];
 
             _game.MovePawn(player, pawn, 1);
-            // _game.MovePawn(player, pawn, diceNumberResult);
         }
     }
 }

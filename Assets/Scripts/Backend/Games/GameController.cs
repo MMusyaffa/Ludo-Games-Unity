@@ -1,3 +1,7 @@
+using System;
+using System.Linq;
+using System.Collections.Generic;
+using UnityEngine;
 using LudoGames.Types.Coordinates;
 using LudoGames.Enums.Colors;
 using LudoGames.Enums.PawnStates;
@@ -10,19 +14,14 @@ using LudoGames.Models.Boards;
 using LudoGames.Models.Dices;
 using LudoGames.Models.Player;
 using LudoGames.Models.Pawns;
-using System.Collections.Generic;
-using System;
-using System.Linq;
-using UnityEngine;
 
 
 namespace LudoGames.Games.GameController
 {
-    public delegate void PathAdd(Coordinate coordinate);
-
     class GameController
     {
         public List<IPlayer> Players { get; private set; }
+        public IPlayer currentPlayerTurn {get; private set; }
         public Dictionary<IPlayer, int> PlayerScores { get; private set; }
         public Dictionary<IPlayer, List<IPawn>> PlayerPawns { get; private set; }
         public Dictionary<IPlayer, List<Coordinate>> PlayerPaths { get; private set; }
@@ -30,13 +29,11 @@ namespace LudoGames.Games.GameController
         public List<Coordinate> PathB { get; private set; }
         public List<Coordinate> PathC { get; private set; }
         public List<Coordinate> PathD { get; private set; }
-        public IPlayer currentPlayerTurn {get; private set; }
         private ITile[,] _tiles;
         private IDice _dice;
-        public int diceNumber { get; private set; } = 0;
         private HashSet<Coordinate> _homeAndSafeZone;
         private readonly System.Random _random = new();
-        // public static PathAdd makePath;
+        public int diceNumber { get; private set; } = 0;
         public Action<IPlayer, IPawn> OnSpawnedPawn;
         public Action<IPawn> OnMovedPawn;
 
@@ -58,6 +55,8 @@ namespace LudoGames.Games.GameController
             PathB = MakePathB();
             PathC = MakePathC();
             PathD = MakePathD();
+
+            InitializationHomeSafeZone();
         }
 
         private List<Coordinate> MakePathA()
@@ -251,16 +250,15 @@ namespace LudoGames.Games.GameController
             var path = PlayerPaths[player];
             int newIndex = pawn.PositionIndex + rollDice;
             bool pawnOnFinalPath = IsPawnOnFinalPath(player, pawn);
+            int lastPath = path.Count - 1 - pawn.PositionIndex;
 
             Coordinate currentCoordinate = pawn.Coordinate;
 
             if (pawnOnFinalPath)
             {
-                int lastpath = path.Count - 1 - pawn.PositionIndex;
-
-                if (rollDice > lastpath) 
+                if (rollDice > lastPath) 
                 { 
-                    Debug.Log($"Dadu tidak boleh lebih dari {lastpath}"); 
+                    Debug.Log($"Dadu tidak boleh lebih dari {lastPath}"); 
                     return false;
                 }
             }
@@ -268,9 +266,12 @@ namespace LudoGames.Games.GameController
             Coordinate newCoordinate = path[newIndex];
             UpdatePawnPosition(pawn, newCoordinate, newIndex);
             
-            if (IsPawnCollide(player, pawn)) { Console.Write(" Collide"); }
+            var knockPawn = IsPawnCollide(player, pawn);
+            if (knockPawn != null) 
+            {
+                Debug.Log("Collide"); 
+            }
 
-            int lastPath = path.Count - 1 - pawn.PositionIndex;
             if (lastPath == 0)
             {
                 pawn.PawnStatesEnum = PawnStatesEnum.Finished;
@@ -287,7 +288,33 @@ namespace LudoGames.Games.GameController
             int currentPlayerIndex = Players.IndexOf(currentPlayerTurn!);
             currentPlayerTurn = Players[(currentPlayerIndex + 1) % Players.Count];
 
-            Debug.Log($"\nGiliran pemain {currentPlayerTurn.Name} untuk jalan");
+            Debug.Log($"\nNext turn, Giliran pemain {currentPlayerTurn.Name} untuk jalan");
+        }
+
+        public IPawn IsPawnCollide(IPlayer movedPlayer, IPawn movedPawn)
+        {
+            if (_homeAndSafeZone.Contains(movedPawn.Coordinate)) 
+            {
+                Debug.Log("Collide on Home or Safe Zone");
+                return null; 
+            }
+
+            foreach (var player in Players)
+            {
+                if (player == movedPlayer) { continue; }
+
+                foreach (var pawn in PlayerPawns[player])
+                {
+                    if (pawn.Coordinate.Equals(movedPawn.Coordinate))
+                    {
+                        Debug.Log($"{player.Name}, {pawn.Coordinate} and {movedPlayer.Name}, {movedPawn.Coordinate}");
+                        KnockPawn(player, pawn);
+                        return pawn;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private ColorsEnum AssignColorForPlayer(IPlayer player)
@@ -311,8 +338,8 @@ namespace LudoGames.Games.GameController
             return playerIndex switch
             {
                 0 => PathD,
-                1 => PathA,
-                2 => PathB,
+                1 => PathB,
+                2 => PathA,
                 3 => PathC,
                 _ => throw new NotImplementedException(),
             };
@@ -330,6 +357,18 @@ namespace LudoGames.Games.GameController
             }
 
             return pawns;
+        }
+
+        private void InitializationHomeSafeZone()
+        {
+            _homeAndSafeZone.Add(new Coordinate(6,13));
+            _homeAndSafeZone.Add(new Coordinate(2,8));
+            _homeAndSafeZone.Add(new Coordinate(1,6));
+            _homeAndSafeZone.Add(new Coordinate(6,2));
+            _homeAndSafeZone.Add(new Coordinate(8,1));
+            _homeAndSafeZone.Add(new Coordinate(12,6));
+            _homeAndSafeZone.Add(new Coordinate(13,8));
+            _homeAndSafeZone.Add(new Coordinate(8,12));
         }
         
         private void UpdatePawnPosition(IPawn pawn, Coordinate coordinate, int index)
@@ -380,35 +419,20 @@ namespace LudoGames.Games.GameController
             return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.OnBoard);
         }
     
-        private bool IsPawnCollide(IPlayer movedPlayer, IPawn movedPawn)
+        public IPlayer GetPlayerPawnOwner(IPawn pawn)
         {
-            if (_homeAndSafeZone.Contains(movedPawn.Coordinate)) { return false; }
-
-            foreach (var player in Players)
+            foreach (var player in PlayerPawns)
             {
-                if (player == movedPlayer) { continue; }
+                var owner = player.Key;
+                var pawnList = player.Value;
 
-                foreach (var pawn in PlayerPawns[player])
+                if (pawnList.Contains(pawn))
                 {
-                    if (pawn.Coordinate.Equals(movedPawn.Coordinate))
-                    {
-                        KnockPawn(player, pawn);
-                        return true;
-                    }
+                    return owner;
                 }
             }
 
-            return false;
+            return null;
         }
-
-        // public IPlayer GetCurrentPlayerTurn()
-        // {
-        //     return currentPlayerTurn!;
-        // }
-
-        // public IReadOnlyDictionary<IPlayer, List<IPawn>> GetPlayerPawns()
-        // {
-        //     return PlayerPawns;
-        // }
     }
 }

@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+using LudoGames.Enums.Colors;
 using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
-using LudoGames.Enums.Colors;
 using LudoGames.Unity.GameManagers;
 using LudoGames.Unity.Boards;
-using LudoGames.Enums.PawnStates;
 
 namespace LudoGames.Unity.Pawns
 {
@@ -14,6 +13,7 @@ namespace LudoGames.Unity.Pawns
         public static PawnManager Instance { get; private set; }
         [SerializeField] private TileManager _tileManager;
         // [SerializeField] private GameManager _gameManager;
+        public int pawnSelectedIndex = -1;
         [SerializeField] private Transform _pawnContainer;
         [SerializeField] private UIPawn _pawnPrefabs;
         [SerializeField] private List<Transform> _homePawnPathA;
@@ -80,92 +80,77 @@ namespace LudoGames.Unity.Pawns
         public void OnSpawnedPawn(IPlayer player, IPawn pawn)
         {
             var pawnObject = Instantiate(_pawnPrefabs, _pawnContainer);
+            var playerPawn = GameManager.Instance._game.PlayerPawns;
             Color pawnColorUI = GetPlayerColor(player.ColorEnum);
 
             UIPawnRegistry[pawn] = pawnObject;
             pawnObject.pawn = pawn;
             pawnObject.SetPawnUIColor(pawnColorUI);
 
-            if (GameManager.Instance._game.PlayerPawns.TryGetValue(player, out var Pawns))
+            if (playerPawn.TryGetValue(player, out var Pawns))
             {
-                int pawnIndex = GameManager.Instance._game.PlayerPawns[player].IndexOf(pawn);
+                int pawnIndex = playerPawn[player].IndexOf(pawn);
                 Transform homeTile = GetPlayerPawnHome(player, pawnIndex);
 
                 pawnObject.SetPawnId(pawnIndex);
                 pawnObject.transform.position = homeTile.position;
-                pawnObject.Init(this, pawn, pawnIndex);
-            } else { Debug.Log($"Player {player} belum ada di PlayerPawns dictionary!"); }
-        }
-
-        public void OnClickedPawn(UIPawn pawnUI)
-        {
-            ResetPawnSelections(pawnUI);
-            var game = GameManager.Instance._game;
-            var player = game.currentPlayerTurn;
-            var dice = GameManager.Instance.diceNumberResult;
-            var selectedPawn = game.SelectPawn(player, dice, pawnUI.GetPawnId());
-
-            if(selectedPawn != null)
-            {
-                Debug.Log($"Pawn {pawnUI.GetPawnId()} milik {player.Name} dipilih untuk bergerak!");
-                // OnMovedPawn(selectedPawn);
+                pawnObject.Init(this, player, pawnIndex);
+            } 
+            else 
+            { 
+                Debug.Log($"Player {player} belum ada di PlayerPawns dictionary!"); 
             }
         }
 
-        public void ResetPawnSelections(UIPawn exceptPawn = null)
+        public void SetSelectedPawn(UIPawn pawnUI)
         {
-            foreach (var uiPawn in UIPawnRegistry.Values)
+            var currentPlayer = GameManager.Instance._game.currentPlayerTurn;
+
+            if (!GameManager.Instance.isDiceRolled)
             {
-                if (uiPawn != exceptPawn)
-                {
-                    uiPawn.DeselectPawn();
-                }
+                Debug.Log("Harus roll dadu terlebih dahulu!");
+                return;
             }
+
+            if (GameManager.Instance.isPawnAlreadyMoved)
+            {
+                Debug.Log("Cannot move another pawn this turn!");
+                return;
+            }
+
+            if (pawnUI.Owner != currentPlayer)
+            {
+                Debug.Log($"{currentPlayer} Cannot select other player {pawnUI.Owner} pawn");
+                return;
+            }
+
+            pawnSelectedIndex = pawnUI.Id;
+            Debug.Log($"Pawn {currentPlayer.Name} {pawnSelectedIndex} selected");
+
+            GameManager.Instance.ControlMovePawn(pawnSelectedIndex);
         }
+
 
         private void OnMovedPawn(IPawn pawn)
         {
             var game = GameManager.Instance._game;
-            var player = game.currentPlayerTurn;
-            var dice = GameManager.Instance.diceNumberResult;
-            bool CanPlayerMovePawn = game.CanPlayerMovePawn(player, dice);
-            var gameIPawn = GetUIPawn(pawn);
+            var currentPlayer = game.currentPlayerTurn;
+            var pawnUI = GetUIPawn(pawn);
 
-            if(gameIPawn)
+            if(pawnUI)
             {
-                if (CanPlayerMovePawn)
-                {
-                    if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome)
-                    {
-                        if (dice == 6)
-                        {
-                            Debug.Log("Pawn keluar dari home");
-                            pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
-                            gameIPawn.MovePawnUI(_tileManager, player);
-                        }
-                        else
-                        {
-                            game.NextTurn();
-                        }
-                    }
-                    else
-                    {
-                        game.MovePawn(player, pawn, dice);
-
-                        var updatePawnUI = GetUIPawn(pawn);
-                        if(updatePawnUI != null)
-                        {
-                            updatePawnUI.MovePawnUI(_tileManager, player);
-                        }
-
-                        if(dice != 6) 
-                        { 
-                            game.NextTurn(); 
-                        }
-                    }
-                    
-                }
+                pawnUI.MovePawnUI(_tileManager, currentPlayer);
             }
+
+            // var knockedPawn = game.IsPawnCollide(currentPlayer, pawn);
+
+            // if (knockedPawn != null)
+            // {
+            //     var knockedPlayerUI = game.GetPlayerPawnOwner(knockedPawn);
+            //     var knockedPawnUI = GetUIPawn(pawn);
+
+            //     knockedPawnUI.ReturnPawnUI(_tileManager, knockedPlayerUI);
+            // }
         }
     }
 }

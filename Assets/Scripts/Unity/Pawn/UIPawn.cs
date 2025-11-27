@@ -1,67 +1,46 @@
+using UnityEngine;
+using UnityEngine.UI;
 using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
 using LudoGames.Unity.Boards;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 namespace LudoGames.Unity.Pawns
 {
-    class UIPawn : MonoBehaviour, IPointerClickHandler
+    class UIPawn : MonoBehaviour
     {
+        public int Id;
+        public IPlayer Owner;
         public IPawn pawn;
         private PawnManager _pawnManager;
-        [SerializeField] private int id;
         [SerializeField] private Image _pawnImage;
-        [SerializeField] bool _isPawnSelected;
+        [SerializeField] private Button _pawnButton;
 
-        public void Init(PawnManager manager, IPawn backendPawn, int pawnId)
+        public void Init(PawnManager manager, IPlayer owner, int pawnId)
         {
             _pawnManager = manager;
-            pawn = backendPawn;
-            id = pawnId;
+            Owner = owner;
+            Id = pawnId;
+            _pawnButton.onClick.AddListener(OnClick);
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnClick()
         {
-            SelectPawn();
+            _pawnManager.SetSelectedPawn(this);
         }
 
         public void SetPawnId(int indexId)
         {
-            id = indexId;
+            Id = indexId;
         }
 
         public int GetPawnId()
         {
-            return id;
+            return Id;
         }
 
         public void SetPawnUIColor(Color color)
         {
             _pawnImage.color = color;
-        }
-
-        public int SelectPawn()
-        {
-            if (!_isPawnSelected)
-            {
-                _isPawnSelected = true;
-                PawnManager.Instance.OnClickedPawn(this);
-                Debug.Log($"Pawn: {id}, {pawn} selected");
-
-                return id;
-            }
-            return -1;
-        }
-
-        public void DeselectPawn()
-        {
-            if (_isPawnSelected)
-            {
-                _isPawnSelected = false;
-                Debug.Log($"Pawn: {id}, {pawn} deselected");
-            }
         }
 
         public void MovePawnUI(TileManager tileManager, IPlayer player)
@@ -71,11 +50,18 @@ namespace LudoGames.Unity.Pawns
 
             transform.position = tile.position;
 
-            Debug.Log($"POS IDX = {pawn.PositionIndex} | PATH COUNT = {path.Count}");
-            Debug.Log($"TARGET TILE = {path[pawn.PositionIndex].name}");
+            Debug.Log($"Path Count: {path.Count}, Target: {path[pawn.PositionIndex].name} " + 
+                    $"Move Pawn | IDX: {pawn.PositionIndex} | PawnPos: {transform.position} | TilePos: {tile.position}");
+        }
 
-            Debug.Log($"Move Pawn | IDX: {pawn.PositionIndex} | PawnPos: {transform.position} | TilePos: {tile.position}"
-            );
+        public void ReturnPawnUI(TileManager tileManager, IPlayer player)
+        {
+            var path = tileManager.GetPlayerPathTiles(player);
+            var tile = path[pawn.PositionIndex = 0];
+
+            transform.position = tile.position;
+
+            Debug.Log($"From UIPawn {player.Name}");
         }
     }
 }
