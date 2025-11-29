@@ -3,7 +3,7 @@ using TMPro;
 
 namespace LudoGames.Unity.UI
 {
-    public class UIManager : MonoBehaviour
+    public class UIGameplay : MonoBehaviour
     {
         public TextMeshProUGUI player1NameUI;
         public TextMeshProUGUI player2NameUI;

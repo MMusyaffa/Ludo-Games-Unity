@@ -12,8 +12,8 @@ namespace LudoGames.Unity.GameManagers
     {
         public static GameManager Instance { get; private set; } 
         internal GameController _game {get; private set; }
-        [SerializeField] private UIManager _uiManager;
-        [SerializeField] private SfxManager sfxManager;
+        [SerializeField] private UIGameplay _uiGameplay;
+        [SerializeField] private SfxManager _sfxManager;
         [SerializeField] private TMP_InputField _playerNameInput;
         [SerializeField] private TextMeshProUGUI _diceNumberUI;
         [SerializeField] private UIDice _dice;
@@ -35,7 +35,7 @@ namespace LudoGames.Unity.GameManagers
             }
 
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            // DontDestroyOnLoad(gameObject);
 
             _game = new GameController();
             diceNumberResult = _game.diceNumber;
@@ -67,10 +67,10 @@ namespace LudoGames.Unity.GameManagers
                 
                 Debug.Log($"New Player {name} Added, Path {_game.PlayerPaths}");
 
-                _uiManager.player1NameUI.text = _game.Players.Count > 0 ? _game.Players[0].Name : "";
-                _uiManager.player2NameUI.text = _game.Players.Count > 1 ? _game.Players[1].Name : "";
-                _uiManager.player3NameUI.text = _game.Players.Count > 2 ? _game.Players[2].Name : "";
-                _uiManager.player4NameUI.text = _game.Players.Count > 3 ? _game.Players[3].Name : "";
+                _uiGameplay.player1NameUI.text = _game.Players.Count > 0 ? _game.Players[0].Name : "";
+                _uiGameplay.player2NameUI.text = _game.Players.Count > 1 ? _game.Players[1].Name : "";
+                _uiGameplay.player3NameUI.text = _game.Players.Count > 2 ? _game.Players[2].Name : "";
+                _uiGameplay.player4NameUI.text = _game.Players.Count > 3 ? _game.Players[3].Name : "";
             }
             else
             {
@@ -111,7 +111,7 @@ namespace LudoGames.Unity.GameManagers
             _diceNumberUI.text = $"{diceNumberResult}";
             isPawnAlreadyMoved = false;
             isDiceRolled = true;
-            sfxManager.PlayDiceClip();
+            // _sfxManager.PlayDiceClip();
 
             Debug.Log($"Dice Rolled: {diceNumberResult}");
 
@@ -125,6 +125,7 @@ namespace LudoGames.Unity.GameManagers
         public void StartRollDice()
         {
             StartCoroutine(_dice.RollDiceAnimation());
+            _sfxManager.PlayDiceClip();
         }
 
         private void OnDiceAnimationFinished()
@@ -146,7 +147,7 @@ namespace LudoGames.Unity.GameManagers
                     isPawnAlreadyMoved = true;
                     pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
                     _game.MovePawn(player, pawn, 0);
-                    sfxManager.PlayPawnClip();
+                    _sfxManager.PlayPawnClip();
                     
                     Debug.Log("Pawn keluar dari home");
 
@@ -157,7 +158,7 @@ namespace LudoGames.Unity.GameManagers
             {
                 _game.MovePawn(player, pawn, diceNumberResult);
                 isPawnAlreadyMoved = true;
-                sfxManager.PlayPawnClip();
+                _sfxManager.PlayPawnClip();
 
                 if (diceNumberResult != 6)
                 {

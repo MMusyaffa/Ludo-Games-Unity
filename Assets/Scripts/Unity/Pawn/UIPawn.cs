@@ -55,7 +55,7 @@ namespace LudoGames.Unity.Pawns
                     $"Move Pawn | IDX: {pawn.PositionIndex} | PawnPos: {transform.position} | TilePos: {tile.position}");
         }
 
-        public void ReturnPawnUI(TileManager tileManager, IPlayer player)
+        public void ReturnPawnUI(IPlayer player)
         {
             // var path = tileManager.GetPlayerPathTiles(player);
             // var tile = path[pawn.PositionIndex = 0];

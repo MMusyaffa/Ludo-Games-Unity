@@ -29,7 +29,9 @@ namespace LudoGames.Unity.Pawns
                 Destroy(gameObject);
                 return;
             }
+
             Instance = this;
+            // DontDestroyOnLoad(gameObject);
         }
 
         void Start()
@@ -143,32 +145,21 @@ namespace LudoGames.Unity.Pawns
             {
                 pawnUI.MovePawnUI(_tileManager, currentPlayer);
             }
-
-            // var knockedPawn = game.IsPawnCollide(currentPlayer, pawn);
-
-            // if (knockedPawn != null)
-            // {
-            //     var knockedPlayerUI = game.GetPlayerPawnOwner(knockedPawn);
-            //     var knockedPawnUI = GetUIPawn(pawn);
-
-            //     knockedPawnUI.ReturnPawnUI(_tileManager, knockedPlayerUI);
-            // }
         }
 
         private void OnReturnPawn(IPawn pawn)
         {
             var game = GameManager.Instance._game;
-            // var movedPlayer = game.currentPlayerTurn;
-            // var knockedPawn = game.IsPawnCollide(movedPlayer, pawn);
             var knockedPlayerUI = game.GetPlayerPawnOwner(pawn);
             var knockedPawnUI = GetUIPawn(pawn);
+
             Debug.Log("Return pawn out");
 
             if (knockedPlayerUI != null && knockedPawnUI != null)
             {
                 Debug.Log("Return pawn in");
 
-                knockedPawnUI.ReturnPawnUI(_tileManager, knockedPlayerUI);
+                knockedPawnUI.ReturnPawnUI(knockedPlayerUI);
             }
         }
     }

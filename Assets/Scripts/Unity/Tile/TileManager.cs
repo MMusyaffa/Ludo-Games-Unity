@@ -9,19 +9,19 @@ namespace LudoGames.Unity.Tiles
     class TileManager : MonoBehaviour
     {
         private Dictionary<Coordinate, UITile> UITileRegistry = new Dictionary<Coordinate, UITile>();
-        [SerializeField] private float size;
-        [SerializeField] private Vector2 offset;
-        [SerializeField] private Transform tileContainer;
-        [SerializeField] private UITile tilePrefab;
+        // [SerializeField] private float size;
+        // [SerializeField] private Vector2 offset;
+        // [SerializeField] private Transform tileContainer;
+        // [SerializeField] private UITile tilePrefab;
         [SerializeField] private List<Transform> tilesPathA;
         [SerializeField] private List<Transform> tilesPathB;
         [SerializeField] private List<Transform> tilesPathC;
         [SerializeField] private List<Transform> tilesPathD;
 
-        public UITile GetUITile(Coordinate coordinate)
-        {
-            return UITileRegistry.GetValueOrDefault(coordinate);
-        }
+        // public UITile GetUITile(Coordinate coordinate)
+        // {
+        //     return UITileRegistry.GetValueOrDefault(coordinate);
+        // }
 
         public List<Transform> GetPlayerPathTiles(IPlayer player)
         {

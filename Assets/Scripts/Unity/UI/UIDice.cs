@@ -14,7 +14,7 @@ namespace LudoGames.Unity.UI
         void Start()
         {
             image = GetComponent<Image>();
-            diceSides = Resources.LoadAll<Sprite>("DiceSides/");
+            diceSides = Resources.LoadAll<Sprite>("Sprites/Dice/DiceSides/");
         }
 
         public IEnumerator RollDiceAnimation()

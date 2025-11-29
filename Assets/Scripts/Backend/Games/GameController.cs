@@ -157,13 +157,13 @@ namespace LudoGames.Games.GameController
         public bool AddNewPlayer(string name)
         {
             IPlayer player = new Player(name);
-            var playerColor = AssignColorForPlayer(player);
+            var playerColor = AssignColorForPlayer();
             
             if (Players.Contains(player)) return false;
 
             Players.Add(player);
             List<Coordinate> playerPath = PathPlayerOrder(player);
-            var pawns = CreatePlayerPawn(player, playerPath);
+            var pawns = CreatePlayerPawn(playerPath);
 
             player.ColorEnum = playerColor;
             PlayerScores[player] = 0;
@@ -318,7 +318,7 @@ namespace LudoGames.Games.GameController
             return null;
         }
 
-        private ColorsEnum AssignColorForPlayer(IPlayer player)
+        private ColorsEnum AssignColorForPlayer()
         {
             int playerIndex = Players.Count; 
             
@@ -346,7 +346,7 @@ namespace LudoGames.Games.GameController
             };
         }
         
-        private List<IPawn> CreatePlayerPawn(IPlayer player, List<Coordinate> coordinate)
+        private List<IPawn> CreatePlayerPawn(List<Coordinate> coordinate)
         {
             var pawns = new List<IPawn>();
             
