@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-namespace LudoGames.Unity.Boards
+namespace LudoGames.Unity.Tiles
 {
     class UITile : MonoBehaviour
     {

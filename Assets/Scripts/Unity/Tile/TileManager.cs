@@ -4,7 +4,7 @@ using LudoGames.Types.Coordinates;
 using LudoGames.Enums.Colors;
 using LudoGames.Interface.Players;
 
-namespace LudoGames.Unity.Boards
+namespace LudoGames.Unity.Tiles
 {
     class TileManager : MonoBehaviour
     {

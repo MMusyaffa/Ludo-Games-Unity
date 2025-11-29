@@ -4,7 +4,7 @@ using LudoGames.Enums.Colors;
 using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
 using LudoGames.Unity.GameManagers;
-using LudoGames.Unity.Boards;
+using LudoGames.Unity.Tiles;
 
 namespace LudoGames.Unity.Pawns
 {
@@ -36,7 +36,8 @@ namespace LudoGames.Unity.Pawns
         {
             var game = GameManager.Instance._game;
             game.OnSpawnedPawn = OnSpawnedPawn;
-            game.OnMovedPawn += OnMovedPawn;
+            game.OnMovedPawn = OnMovedPawn;
+            game.OnReturnPawn = OnReturnPawn;
         }
 
         private Transform GetPlayerPawnHome(IPlayer player, int index)
@@ -94,6 +95,7 @@ namespace LudoGames.Unity.Pawns
 
                 pawnObject.SetPawnId(pawnIndex);
                 pawnObject.transform.position = homeTile.position;
+                pawnObject.homePawn = homeTile;
                 pawnObject.Init(this, player, pawnIndex);
             } 
             else 
@@ -151,6 +153,23 @@ namespace LudoGames.Unity.Pawns
 
             //     knockedPawnUI.ReturnPawnUI(_tileManager, knockedPlayerUI);
             // }
+        }
+
+        private void OnReturnPawn(IPawn pawn)
+        {
+            var game = GameManager.Instance._game;
+            // var movedPlayer = game.currentPlayerTurn;
+            // var knockedPawn = game.IsPawnCollide(movedPlayer, pawn);
+            var knockedPlayerUI = game.GetPlayerPawnOwner(pawn);
+            var knockedPawnUI = GetUIPawn(pawn);
+            Debug.Log("Return pawn out");
+
+            if (knockedPlayerUI != null && knockedPawnUI != null)
+            {
+                Debug.Log("Return pawn in");
+
+                knockedPawnUI.ReturnPawnUI(_tileManager, knockedPlayerUI);
+            }
         }
     }
 }

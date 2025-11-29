@@ -3,8 +3,8 @@ using TMPro;
 using LudoGames.Enums.PawnStates;
 using LudoGames.Interface.Players;
 using LudoGames.Games.GameController;
-using LudoGames.Unity.UI;
 using LudoGames.Unity.Menus;
+using LudoGames.Unity.UI;
 
 namespace LudoGames.Unity.GameManagers
 {
@@ -16,6 +16,7 @@ namespace LudoGames.Unity.GameManagers
         [SerializeField] private SfxManager sfxManager;
         [SerializeField] private TMP_InputField _playerNameInput;
         [SerializeField] private TextMeshProUGUI _diceNumberUI;
+        [SerializeField] private UIDice _dice;
         public bool isPawnAlreadyMoved = false;
         public bool isDiceRolled = false;
         [SerializeField] private TextMeshProUGUI _currentPlayerUI;
@@ -38,6 +39,8 @@ namespace LudoGames.Unity.GameManagers
 
             _game = new GameController();
             diceNumberResult = _game.diceNumber;
+            _dice.OnDiceAnimationFinished = OnDiceAnimationFinished;
+
             _diceNumberUI.text = $"{diceNumberResult}";
             _player1Name.text = $"";
             _player2Name.text = $"";
@@ -100,7 +103,7 @@ namespace LudoGames.Unity.GameManagers
             _player4Name.text = _game.Players.Count > 3 ? _game.Players[3].Name : "";
         }
 
-        public void RollDice()
+        private void RollDice()
         {
             IPlayer currentPlayer = _game.currentPlayerTurn;
 
@@ -117,6 +120,17 @@ namespace LudoGames.Unity.GameManagers
                 NextTurn();
                 return;
             }
+        }
+
+        public void StartRollDice()
+        {
+            StartCoroutine(_dice.RollDiceAnimation());
+        }
+
+        private void OnDiceAnimationFinished()
+        {
+            RollDice();
+            _dice.SetFinalDiceSprite(diceNumberResult);
         }
 
         public void ControlMovePawn(int pawnIndex)

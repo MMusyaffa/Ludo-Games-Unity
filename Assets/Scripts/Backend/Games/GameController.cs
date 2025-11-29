@@ -14,8 +14,6 @@ using LudoGames.Models.Boards;
 using LudoGames.Models.Dices;
 using LudoGames.Models.Player;
 using LudoGames.Models.Pawns;
-
-
 namespace LudoGames.Games.GameController
 {
     class GameController
@@ -36,6 +34,7 @@ namespace LudoGames.Games.GameController
         public int diceNumber { get; private set; } = 0;
         public Action<IPlayer, IPawn> OnSpawnedPawn;
         public Action<IPawn> OnMovedPawn;
+        public Action<IPawn> OnReturnPawn;
 
         public GameController()
         {
@@ -296,7 +295,7 @@ namespace LudoGames.Games.GameController
             if (_homeAndSafeZone.Contains(movedPawn.Coordinate)) 
             {
                 Debug.Log("Collide on Home or Safe Zone");
-                return null; 
+                return null;
             }
 
             foreach (var player in Players)
@@ -309,6 +308,8 @@ namespace LudoGames.Games.GameController
                     {
                         Debug.Log($"{player.Name}, {pawn.Coordinate} and {movedPlayer.Name}, {movedPawn.Coordinate}");
                         KnockPawn(player, pawn);
+                        OnReturnPawn?.Invoke(pawn);
+                        
                         return pawn;
                     }
                 }
@@ -327,7 +328,7 @@ namespace LudoGames.Games.GameController
                 1 => ColorsEnum.Green,
                 2 => ColorsEnum.Red,
                 3 => ColorsEnum.Yellow,
-                _ => throw new NotImplementedException(),
+                _ => ColorsEnum.Blue,
             };
         }
 
@@ -341,7 +342,7 @@ namespace LudoGames.Games.GameController
                 1 => PathB,
                 2 => PathA,
                 3 => PathC,
-                _ => throw new NotImplementedException(),
+                _ => PathD,
             };
         }
         

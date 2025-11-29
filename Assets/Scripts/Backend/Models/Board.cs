@@ -1,5 +1,4 @@
 using LudoGames.Types.Coordinates;
-using LudoGames.Enums.TileTypes;
 using LudoGames.Interface.Tiles;
 using LudoGames.Interface.Boards;
 using LudoGames.Models.Tiles;
@@ -25,7 +24,7 @@ namespace LudoGames.Models.Boards
                 {
                     for (int y = 0; y < width; y++)
                     {
-                        tiles[x, y] = new Tile(TileTypesEnum.GeneralPath, new Coordinate(x, y));
+                        tiles[x, y] = new Tile(new Coordinate(x, y));
                     }
                 }
             }

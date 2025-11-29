@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
-using LudoGames.Unity.Boards;
+using LudoGames.Unity.Tiles;
 
 namespace LudoGames.Unity.Pawns
 {
@@ -11,6 +11,7 @@ namespace LudoGames.Unity.Pawns
         public int Id;
         public IPlayer Owner;
         public IPawn pawn;
+        public Transform homePawn;
         private PawnManager _pawnManager;
         [SerializeField] private Image _pawnImage;
         [SerializeField] private Button _pawnButton;
@@ -56,10 +57,10 @@ namespace LudoGames.Unity.Pawns
 
         public void ReturnPawnUI(TileManager tileManager, IPlayer player)
         {
-            var path = tileManager.GetPlayerPathTiles(player);
-            var tile = path[pawn.PositionIndex = 0];
+            // var path = tileManager.GetPlayerPathTiles(player);
+            // var tile = path[pawn.PositionIndex = 0];
 
-            transform.position = tile.position;
+            transform.position = homePawn.position;
 
             Debug.Log($"From UIPawn {player.Name}");
         }
