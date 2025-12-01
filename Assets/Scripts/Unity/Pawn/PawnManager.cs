@@ -41,6 +41,7 @@ namespace LudoGames.Unity.Pawns
             game.OnSpawnedPawn = OnSpawnedPawn;
             game.OnMovedPawn = OnMovedPawn;
             game.OnReturnPawn = OnReturnPawn;
+            // game.OnMoveNextPawn = OnMoveNextPawn;
         }
 
         private Transform GetPlayerPawnHome(IPlayer player, int index)
@@ -124,10 +125,10 @@ namespace LudoGames.Unity.Pawns
 
             ResetAllIndicatorPawn();
 
-            if (!game.CanPlayerMovePawn(currentPlayer, GameManager.Instance.diceNumberResult))
-            {
-                return;
-            }
+            // if (!game.CanPlayerMovePawn(currentPlayer, GameManager.Instance.diceNumberResult))
+            // {
+            //     return;
+            // }
 
             foreach (var pawn in UIPawnRegistry.Values)
             {
@@ -229,6 +230,18 @@ namespace LudoGames.Unity.Pawns
                 Debug.Log("Return pawn in");
 
                 knockedPawnUI.ReturnPawnUI(knockedPlayerUI);
+            }
+        }
+
+        private void OnMoveNextPawn(IPawn pawn)
+        {
+            var game = GameManager.Instance._game;
+            var currentPlayer = game.currentPlayerTurn;
+            var pawnUI = GetUIPawn(pawn);
+
+            if(pawnUI)
+            {
+                pawnUI.MoveNextPawnUI(_tileManager, currentPlayer);
             }
         }
     }

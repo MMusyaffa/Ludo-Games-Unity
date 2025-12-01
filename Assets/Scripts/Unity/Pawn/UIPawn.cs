@@ -73,5 +73,19 @@ namespace LudoGames.Unity.Pawns
 
             Debug.Log($"From UIPawn {player.Name}");
         }
+
+        public void MoveNextPawnUI(TileManager tileManager, IPlayer player)
+        {
+            var path = tileManager.GetPlayerPathTiles(player);
+            var tile = path[pawn.PositionIndex];
+
+            Vector3 newPos = new Vector3(
+                tile.position.x + 1f,
+                tile.position.y,
+                tile.position.z
+            );
+
+            transform.position = newPos;
+        }
     }
 }

@@ -7,6 +7,7 @@ using LudoGames.Unity.Menus;
 using LudoGames.Unity.UI;
 using LudoGames.Unity.Pawns;
 using System.Linq;
+using System.Collections;
 
 namespace LudoGames.Unity.GameManagers
 {
@@ -191,9 +192,21 @@ namespace LudoGames.Unity.GameManagers
             isPawnAlreadyMoved = true;
             _sfxManager.PlayPawnClip();
 
-            if (isAnyPawnKilled || isAnyPawnFinished)
+            // if (isAnyPawnKilled || isAnyPawnFinished)
+            // {
+            //     Debug.Log("Kill atau Finish → tidak next turn");
+            //     return;
+            // }
+
+            if (isAnyPawnKilled)
             {
-                Debug.Log("Kill atau Finish → tidak next turn");
+                ShowNotification($"{player.Name} killed a pawn!", "");
+                return;
+            }
+
+            if (isAnyPawnFinished)
+            {
+                ShowNotification("", $"{player.Name} finished a pawn!");
                 return;
             }
 
@@ -281,6 +294,44 @@ namespace LudoGames.Unity.GameManagers
             var pawn = pawns[0];
 
             _game.MovePawn(player, pawn, 1, out _, out _);
+        }
+
+        public void UpdateTurnIndicator()
+        {
+            // Matikan semua indikator dulu
+            _uiGameplay.player1Indicator.SetActive(false);
+            _uiGameplay.player2Indicator.SetActive(false);
+            _uiGameplay.player3Indicator.SetActive(false);
+            _uiGameplay.player4Indicator.SetActive(false);
+
+            var game = GameManager.Instance._game;
+            var currentPlayer = game.currentPlayerTurn;
+            int index = game.Players.IndexOf(currentPlayer);
+
+            if (index == 0) _uiGameplay.player1Indicator.SetActive(true);
+            if (index == 1) _uiGameplay.player2Indicator.SetActive(true);
+            if (index == 2) _uiGameplay.player3Indicator.SetActive(true);
+            if (index == 3) _uiGameplay.player4Indicator.SetActive(true);
+        }
+
+        private void ShowNotification(string killedMsg = "", string finishMsg = "")
+        {
+            _uiGameplay.notification.SetActive(true);
+
+            _uiGameplay.pawnKilled.gameObject.SetActive(!string.IsNullOrEmpty(killedMsg));
+            _uiGameplay.pawnFinish.gameObject.SetActive(!string.IsNullOrEmpty(finishMsg));
+
+            _uiGameplay.pawnKilled.text = killedMsg;
+            _uiGameplay.pawnFinish.text = finishMsg;
+
+            // Opsional: auto hide setelah 2 detik
+            StartCoroutine(HideNotifAfterDelay());
+        }
+
+        private IEnumerator HideNotifAfterDelay()
+        {
+            yield return new WaitForSeconds(2f);
+            _uiGameplay.notification.SetActive(false);
         }
     }
 }
