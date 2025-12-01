@@ -10,10 +10,10 @@ namespace LudoGames.Unity.UI
         public TextMeshProUGUI player3NameUI;
         public TextMeshProUGUI player4NameUI;
 
-                public TextMeshProUGUI player1NameUI;
-        public TextMeshProUGUI player2NameUI;
-        public TextMeshProUGUI player3NameUI;
-        public TextMeshProUGUI player4NameUI;
+        public TextMeshProUGUI playerRank1NameUI;
+        public TextMeshProUGUI playerRank2NameUI;
+        public TextMeshProUGUI playerRank3NameUI;
+        public TextMeshProUGUI playerRank4NameUI;
 
         void Start()
         {

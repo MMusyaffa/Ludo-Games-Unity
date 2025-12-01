@@ -415,7 +415,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Setting
+  m_text: Manual
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6132670ace1925a43a538c0d72715574, type: 2}
   m_sharedMaterial: {fileID: -8473506696798793300, guid: 6132670ace1925a43a538c0d72715574, type: 2}
@@ -1810,9 +1810,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioSource: {fileID: 482729294}
   sfxSlider: {fileID: 56582670}
-  buttonClick: {fileID: 8300000, guid: 5518e35a9fb17fa48b09ca0e719a97cf, type: 3}
+  buttonClick: {fileID: 8300000, guid: 4203095e43b406e4dbec729d207db619, type: 3}
   diceClip: {fileID: 8300000, guid: a8189c6ca30e80140a49535de4175f8d, type: 3}
-  pawnClip: {fileID: 8300000, guid: f2002015084adad45b469d069e4dc519, type: 3}
+  pawnClip: {fileID: 8300000, guid: 7457baa2d2d3e1048a6849233c05b210, type: 3}
   winClip: {fileID: 8300000, guid: d47201f4d8681d847804734f56d66688, type: 3}
   loseClip: {fileID: 8300000, guid: 6e2ab1c76289e004986dac4d4228eb40, type: 3}
 --- !u!1 &518963826

@@ -6,6 +6,7 @@ using LudoGames.Games.GameController;
 using LudoGames.Unity.Menus;
 using LudoGames.Unity.UI;
 using LudoGames.Unity.Pawns;
+using System.Linq;
 
 namespace LudoGames.Unity.GameManagers
 {
@@ -21,6 +22,9 @@ namespace LudoGames.Unity.GameManagers
         [SerializeField] private UIDice _dice;
         public bool isPawnAlreadyMoved = false;
         public bool isDiceRolled = false;
+        public bool isAnyPawnKilled = false;
+        public bool isAnyPawnFinished = false;
+        [SerializeField] private CanvasGroup _winningPanel;
         [SerializeField] private TextMeshProUGUI _currentPlayerUI;
         [SerializeField] private TextMeshProUGUI _player1Name;
         [SerializeField] private TextMeshProUGUI _player2Name;
@@ -155,7 +159,7 @@ namespace LudoGames.Unity.GameManagers
                 {
                     isPawnAlreadyMoved = true;
                     pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
-                    _game.MovePawn(player, pawn, 0);
+                    _game.MovePawn(player, pawn, 0, out _, out _);
                     _sfxManager.PlayPawnClip();
                     isDiceRolled = false;
                     PawnManager.Instance.ResetAllIndicatorPawn();
@@ -170,20 +174,28 @@ namespace LudoGames.Unity.GameManagers
                 }
             }
 
-            bool pawnValidMove = _game.MovePawn(player, pawn, diceNumberResult);
+            bool killedPawn;
+            bool finishedPawn;
+            bool pawnValidMove = _game.MovePawn(player, pawn, diceNumberResult, out killedPawn, out finishedPawn);
             
-            if (pawnValidMove)
-            {
-                PawnManager.Instance.ResetAllIndicatorPawn();
-                isDiceRolled = false;
-            }
-            else
+            if (!pawnValidMove)
             {
                 return;
             }
 
+            isAnyPawnKilled = killedPawn;
+            isAnyPawnFinished = finishedPawn;
+
+            _pawnManager.ResetAllIndicatorPawn();
+            isDiceRolled = false;
             isPawnAlreadyMoved = true;
             _sfxManager.PlayPawnClip();
+
+            if (isAnyPawnKilled || isAnyPawnFinished)
+            {
+                Debug.Log("Kill atau Finish → tidak next turn");
+                return;
+            }
 
             if (diceNumberResult != 6)
             {
@@ -199,13 +211,76 @@ namespace LudoGames.Unity.GameManagers
             isDiceRolled = false;
         }
 
-        public void TestMove()
+        public void CheckGameWinningState()
+        {
+            int totalPlayers = _game.Players.Count;
+            int playersFinishedAll = 0;
+
+            foreach (var player in _game.Players)
+            {
+                if (_game.IsAllPlayerFinished(player))
+                    playersFinishedAll++;
+            }
+
+            int requiredFinished = totalPlayers - 1;
+
+            Debug.Log($"Players finished: {playersFinishedAll}/{requiredFinished}");
+
+            if (playersFinishedAll >= requiredFinished)
+            {
+                Debug.Log("GAME END!");
+                ShowWinningPanel();
+            }
+        }
+
+        public void ShowWinningPanel()
+        {
+            var leaderboard = _game.PlayerScores.OrderByDescending(x => x.Value).Select(x => x.Key).ToList();
+
+            _uiGameplay.playerRank1NameUI.text = leaderboard.Count > 0 ? leaderboard[0].Name : "-";
+            _uiGameplay.playerRank2NameUI.text = leaderboard.Count > 1 ? leaderboard[1].Name : "-";
+            _uiGameplay.playerRank3NameUI.text = leaderboard.Count > 2 ? leaderboard[2].Name : "-";
+            _uiGameplay.playerRank4NameUI.text = leaderboard.Count > 3 ? leaderboard[3].Name : "-";
+
+            _winningPanel.alpha = 1f;
+            _winningPanel.blocksRaycasts = true;
+            _winningPanel.interactable = true;
+        }
+
+        public void TestMove1()
+        {
+            var player = _game.currentPlayerTurn;
+            var pawns = _game.PlayerPawns[player];
+            var pawn = pawns[1];
+
+            _game.MovePawn(player, pawn, 1, out _, out _);
+        }
+
+        public void TestMove2()
         {
             var player = _game.currentPlayerTurn;
             var pawns = _game.PlayerPawns[player];
             var pawn = pawns[2];
 
-            _game.MovePawn(player, pawn, 1);
+            _game.MovePawn(player, pawn, 1, out _, out _);
+        }
+
+        public void TestMove3()
+        {
+            var player = _game.currentPlayerTurn;
+            var pawns = _game.PlayerPawns[player];
+            var pawn = pawns[3];
+
+            _game.MovePawn(player, pawn, 1, out _, out _);
+        }
+
+        public void TestMove4()
+        {
+            var player = _game.currentPlayerTurn;
+            var pawns = _game.PlayerPawns[player];
+            var pawn = pawns[0];
+
+            _game.MovePawn(player, pawn, 1, out _, out _);
         }
     }
 }

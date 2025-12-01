@@ -14,6 +14,7 @@ using LudoGames.Models.Boards;
 using LudoGames.Models.Dices;
 using LudoGames.Models.Player;
 using LudoGames.Models.Pawns;
+using LudoGames.Unity.GameManagers;
 namespace LudoGames.Games.GameController
 {
     class GameController
@@ -218,9 +219,11 @@ namespace LudoGames.Games.GameController
         public bool CanPlayerMovePawn(IPlayer player, int diceResult)
         {
             bool allPawnsHome = IsAllPawnsAtHome(player);
+            bool allPawnsFinish = IsAllPawnsFinish(player);
             bool isAnyPawnOnBoard = IsAnyPawnOnBoard(player);
-            bool isAnyPawnFinsih = IsAnyPawnFinish(player);
-            
+            bool isAnyPawnOnFinalPath = IsAnyPawnOnFinalPath(player);
+            bool isAnyPawnFinish = IsAnyPawnFinish(player);
+
             if (allPawnsHome)
             {
                 if (diceResult != 6)
@@ -231,34 +234,113 @@ namespace LudoGames.Games.GameController
                 else return true;
             }
 
-            if (isAnyPawnFinsih && !isAnyPawnOnBoard)
+            if (allPawnsFinish)
             {
-                if (diceResult != 6)
-                {
-                    Debug.Log($"Player {player.Name} tidak bisa jalan karena ada pawn finish dan masih di home, skip");
-                    return false;
-                }
-                else return true;
+                Debug.Log($"Player {player.Name} tidak bisa jalan karena semua pawn sudah finish");
+                return false;
             }
 
-            foreach (var pawn in PlayerPawns[player])
+            // if (isAnyPawnOnFinalPath)
+            // {
+            //     bool anyPawnCanMove = CanAnyPawnOnFinalPathMove(player, diceResult);
+
+            //     if (!anyPawnCanMove)
+            //     {
+            //         Debug.Log($"Player {player.Name} tidak bisa jalan karena dadu {diceResult} lebih dari sisa langkah final path");
+            //         return false;
+            //     }
+
+            //     // kalau ada pawn final yang bisa bergerak → boleh jalan
+            //     return true;
+            // }
+
+            bool anyPawnCanMove = CanPlayerMoveAnyPawn(player, diceResult);
+
+            if (!anyPawnCanMove)
             {
-                if (IsPawnOnFinalPath(player, pawn))
-                {
-                    int lastPath = PlayerPaths[player].Count - 1 - pawn.PositionIndex;
-                    if (diceResult > lastPath)
-                    {
-                        Debug.Log($"Player {player.Name} tidak bisa jalan, dadu {diceResult} lebih dari sisa langkah {lastPath}");
-                        return false;
-                    }
-                }
+                Debug.Log($"Player {player.Name} skip (tidak ada pawn yang bisa bergerak)");
+                return false;
             }
+
+            // if (isAnyPawnFinish && !isAnyPawnOnBoard)
+            // {
+            //     if (diceResult != 6)
+            //     {
+            //         Debug.Log($"Player {player.Name} tidak bisa jalan karena ada pawn finish dan masih di home, skip");
+            //         return false;
+            //     }
+                
+            //     else return true;
+            // }
+
+            
+
+            // foreach (var pawn in PlayerPawns[player])
+            // {
+            //     if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome && diceNumber == 6)
+            //     {
+            //         continue;
+            //     }
+
+            //     if (IsPawnOnFinalPath(player, pawn))
+            //     {
+            //         return true;
+            //     }
+
+            //     int lastPath = PlayerPaths[player].Count - 1 - pawn.PositionIndex;
+            //     if (diceResult > lastPath)
+            //     {
+            //         return false;
+            //         // break;
+            //     }
+
+            //     // if (IsPawnOnFinalPath(player, pawn))
+            //     // {
+            //     //     int lastPath = PlayerPaths[player].Count - 1 - pawn.PositionIndex;
+            //     //     if (diceResult > lastPath)
+            //     //     {
+            //     //         Debug.Log($"Player {player.Name} tidak bisa jalan, dadu {diceResult} lebih dari sisa langkah {lastPath}");
+            //     //         return false;
+            //     //     }
+            //     // }
+            // }
 
             return true;
         }
 
-        public bool MovePawn(IPlayer player, IPawn pawn, int rollDice)
+        private bool CanPlayerMoveAnyPawn(IPlayer player, int diceResult)
         {
+            int pathLeft = -1;
+            foreach (var pawn in PlayerPawns[player])
+            {
+                switch (pawn.PawnStatesEnum)
+                {
+                    case PawnStatesEnum.AtHome:
+                        if (diceResult == 6)
+                            return true;
+                        break;
+                    case PawnStatesEnum.OnBoard:
+                        return true;
+                    case PawnStatesEnum.OnFinishPath:
+                        int remainingPath = PlayerPaths[player].Count - 1 - pawn.PositionIndex;
+                        pathLeft = remainingPath;
+                        if (diceResult <= remainingPath)
+                            return true;
+                        break;
+                }
+
+                Debug.Log($"Player {player.Name}, pawn - {pawn}, {pathLeft}");
+            }
+
+            return false;
+        }
+
+
+        public bool MovePawn(IPlayer player, IPawn pawn, int rollDice,  out bool killedPawn, out bool finishedPawn)
+        {
+            killedPawn = false;
+            finishedPawn = false;
+
             var path = PlayerPaths[player];
             int newIndex = pawn.PositionIndex + rollDice;
             bool pawnOnFinalPath = IsPawnOnFinalPath(player, pawn);
@@ -268,6 +350,7 @@ namespace LudoGames.Games.GameController
 
             if (pawnOnFinalPath)
             {
+                pawn.PawnStatesEnum = PawnStatesEnum.OnFinishPath;
                 if (rollDice > lastPath) 
                 { 
                     Debug.Log($"Dadu tidak boleh lebih dari {lastPath}"); 
@@ -281,14 +364,20 @@ namespace LudoGames.Games.GameController
             var knockPawn = IsPawnCollide(player, pawn);
             if (knockPawn != null) 
             {
-                Debug.Log("Collide"); 
+                Debug.Log("Collide");
+                killedPawn = true;
             }
 
-            if (lastPath == 0)
+            if (newIndex == path.Count - 1)
             {
                 pawn.PawnStatesEnum = PawnStatesEnum.Finished;
-                Debug.Log($"Pawn mencapai akhir untuk player {player.Name}!");
-                return false;
+                PlayerScores[player] += 1;
+                PlayerScoreLeaderboard();
+                GameManager.Instance.CheckGameWinningState();
+                finishedPawn = true;
+
+                Debug.Log($"Pawn mencapai akhir untuk player {player.Name}, score {PlayerScores[player]}");
+                return true;
             }
 
             Debug.Log($"Bidak maju sebanyak: {rollDice}, Dari block {currentCoordinate} ke block {newCoordinate}");
@@ -423,16 +512,46 @@ namespace LudoGames.Games.GameController
             return false;
         }
 
+        private bool IsAnyPawnOnBoard(IPlayer player)
+        {
+            return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.OnBoard);
+        }
+
+        private bool IsAnyPawnOnFinalPath(IPlayer player)
+        {
+            return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.OnFinishPath);
+        }
+
         private bool IsAnyPawnFinish(IPlayer player)
         {
             return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
         }
 
-        private bool IsAnyPawnOnBoard(IPlayer player)
+        private bool IsAllPawnsFinish(IPlayer player)
         {
-            return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.OnBoard);
+            return PlayerPawns[player].All(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
         }
-    
+
+        public bool IsAllPlayerFinished(IPlayer player)
+        {
+            var pawns = PlayerPawns[player];
+            return pawns.All(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
+        }
+
+        private void PlayerScoreLeaderboard()
+        {
+            Debug.Log("Scoreboard");
+
+            var leaderboard = PlayerScores.OrderByDescending(x => x.Value);
+            int rank = 1;
+
+            foreach (var rankInfo in leaderboard)
+            {
+                Debug.Log($"#{rank}, {rankInfo.Key.Name} - {rankInfo.Value}");
+                rank++;
+            }
+        }
+
         public IPlayer GetPlayerPawnOwner(IPawn pawn)
         {
             foreach (var player in PlayerPawns)
@@ -448,5 +567,6 @@ namespace LudoGames.Games.GameController
 
             return null;
         }
+
     }
 }

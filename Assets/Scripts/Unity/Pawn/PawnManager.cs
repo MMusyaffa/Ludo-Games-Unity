@@ -65,13 +65,13 @@ namespace LudoGames.Unity.Pawns
             switch(colorEnum)
             {
                 case ColorsEnum.Red:
-                    return Color.red;
-                case ColorsEnum.Green:
                     return Color.green;
+                case ColorsEnum.Green:
+                    return Color.red;
                 case ColorsEnum.Yellow:
-                    return Color.yellow;
-                case ColorsEnum.Blue:
                     return Color.magenta;
+                case ColorsEnum.Blue:
+                    return Color.yellow;
             }
             return Color.white;
         }
@@ -136,17 +136,38 @@ namespace LudoGames.Unity.Pawns
                     continue;
                 }
 
-                if (GameManager.Instance.diceNumberResult == 6)
+                if (GameManager.Instance.diceNumberResult == 6 && pawn.pawn.PawnStatesEnum == PawnStatesEnum.AtHome)
                 {
                     pawn.SetIndicator(indicator);
                     Debug.Log($"Owner: {pawn.Owner}");
                     continue;
                 }
 
-                if (pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnBoard || pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnFinishPath)
+                if (pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnBoard)
                 {
                     pawn.SetIndicator(indicator);
                     Debug.Log($"Owner: {pawn.Owner}, state {pawn.pawn.PawnStatesEnum}");
+                    continue;
+                }
+
+                if (pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnFinishPath)
+                {
+                    int pawnIndex = pawn.pawn.PositionIndex;
+                    int lastPath = game.PlayerPaths[currentPlayer].Count - 1 - pawnIndex;
+
+                    if (GameManager.Instance.diceNumberResult <= lastPath)
+                    {
+                        pawn.SetIndicator(indicator);
+                    }
+                    else
+                    {
+                        pawn.SetIndicator(false);
+                    }
+                }
+
+                if (pawn.pawn.PawnStatesEnum == PawnStatesEnum.Finished)
+                {
+                    pawn.SetIndicator(false);
                 }
             }
         }
