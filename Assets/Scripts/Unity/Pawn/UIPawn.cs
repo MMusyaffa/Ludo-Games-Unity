@@ -14,6 +14,7 @@ namespace LudoGames.Unity.Pawns
         public Transform homePawn;
         private PawnManager _pawnManager;
         [SerializeField] private Image _pawnImage;
+        [SerializeField] private Image _pawnIndicatorImage;
         [SerializeField] private Button _pawnButton;
 
         public void Init(PawnManager manager, IPlayer owner, int pawnId)
@@ -42,6 +43,14 @@ namespace LudoGames.Unity.Pawns
         public void SetPawnUIColor(Color color)
         {
             _pawnImage.color = color;
+        }
+
+        public void SetIndicator(bool active)
+        {
+            if (_pawnIndicatorImage != null)
+            {
+                _pawnIndicatorImage.gameObject.SetActive(active);
+            }
         }
 
         public void MovePawnUI(TileManager tileManager, IPlayer player)

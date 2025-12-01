@@ -5,6 +5,7 @@ using LudoGames.Interface.Players;
 using LudoGames.Games.GameController;
 using LudoGames.Unity.Menus;
 using LudoGames.Unity.UI;
+using LudoGames.Unity.Pawns;
 
 namespace LudoGames.Unity.GameManagers
 {
@@ -13,6 +14,7 @@ namespace LudoGames.Unity.GameManagers
         public static GameManager Instance { get; private set; } 
         internal GameController _game {get; private set; }
         [SerializeField] private UIGameplay _uiGameplay;
+        [SerializeField] private PawnManager _pawnManager;
         [SerializeField] private SfxManager _sfxManager;
         [SerializeField] private TMP_InputField _playerNameInput;
         [SerializeField] private TextMeshProUGUI _diceNumberUI;
@@ -120,12 +122,20 @@ namespace LudoGames.Unity.GameManagers
                 NextTurn();
                 return;
             }
+            else
+            {
+                _pawnManager.ControlPawnIndicator(true);
+            }
         }
 
         public void StartRollDice()
         {
-            StartCoroutine(_dice.RollDiceAnimation());
-            _sfxManager.PlayDiceClip();
+            if (!isDiceRolled)
+            {
+                StartCoroutine(_dice.RollDiceAnimation());
+                _sfxManager.PlayDiceClip();
+            }
+            
         }
 
         private void OnDiceAnimationFinished()
@@ -137,7 +147,6 @@ namespace LudoGames.Unity.GameManagers
         public void ControlMovePawn(int pawnIndex)
         {
             var player = _game.currentPlayerTurn;
-
             var pawn = _game.SelectPawn(player, diceNumberResult, pawnIndex);
 
             if (pawn.PawnStatesEnum == PawnStatesEnum.AtHome)
@@ -148,23 +157,37 @@ namespace LudoGames.Unity.GameManagers
                     pawn.PawnStatesEnum = PawnStatesEnum.OnBoard;
                     _game.MovePawn(player, pawn, 0);
                     _sfxManager.PlayPawnClip();
+                    isDiceRolled = false;
+                    PawnManager.Instance.ResetAllIndicatorPawn();
                     
                     Debug.Log("Pawn keluar dari home");
 
                     return;
                 }
+                else
+                {
+                    return;
+                }
+            }
+
+            bool pawnValidMove = _game.MovePawn(player, pawn, diceNumberResult);
+            
+            if (pawnValidMove)
+            {
+                PawnManager.Instance.ResetAllIndicatorPawn();
+                isDiceRolled = false;
             }
             else
             {
-                _game.MovePawn(player, pawn, diceNumberResult);
-                isPawnAlreadyMoved = true;
-                _sfxManager.PlayPawnClip();
+                return;
+            }
 
-                if (diceNumberResult != 6)
-                {
-                    NextTurn();
-                    return;
-                }
+            isPawnAlreadyMoved = true;
+            _sfxManager.PlayPawnClip();
+
+            if (diceNumberResult != 6)
+            {
+                NextTurn();
             }
         }
 

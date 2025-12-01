@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using LudoGames.Enums.Colors;
+using LudoGames.Enums.PawnStates;
 using LudoGames.Interface.Pawns;
 using LudoGames.Interface.Players;
 using LudoGames.Unity.GameManagers;
@@ -70,7 +71,7 @@ namespace LudoGames.Unity.Pawns
                 case ColorsEnum.Yellow:
                     return Color.yellow;
                 case ColorsEnum.Blue:
-                    return Color.cyan;
+                    return Color.magenta;
             }
             return Color.white;
         }
@@ -99,6 +100,8 @@ namespace LudoGames.Unity.Pawns
                 pawnObject.transform.position = homeTile.position;
                 pawnObject.homePawn = homeTile;
                 pawnObject.Init(this, player, pawnIndex);
+
+                ResetAllIndicatorPawn();
             } 
             else 
             { 
@@ -106,9 +109,53 @@ namespace LudoGames.Unity.Pawns
             }
         }
 
+        public void ResetAllIndicatorPawn()
+        {
+            foreach (var pawn in UIPawnRegistry.Values)
+            {
+                pawn.SetIndicator(false);
+            }
+        }
+
+        public void ControlPawnIndicator(bool indicator)
+        {
+            var game = GameManager.Instance._game;
+            var currentPlayer = game.currentPlayerTurn;
+
+            ResetAllIndicatorPawn();
+
+            if (!game.CanPlayerMovePawn(currentPlayer, GameManager.Instance.diceNumberResult))
+            {
+                return;
+            }
+
+            foreach (var pawn in UIPawnRegistry.Values)
+            {
+                if (pawn.Owner != currentPlayer)
+                {
+                    continue;
+                }
+
+                if (GameManager.Instance.diceNumberResult == 6)
+                {
+                    pawn.SetIndicator(indicator);
+                    Debug.Log($"Owner: {pawn.Owner}");
+                    continue;
+                }
+
+                if (pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnBoard || pawn.pawn.PawnStatesEnum == PawnStatesEnum.OnFinishPath)
+                {
+                    pawn.SetIndicator(indicator);
+                    Debug.Log($"Owner: {pawn.Owner}, state {pawn.pawn.PawnStatesEnum}");
+                }
+            }
+        }
+
         public void SetSelectedPawn(UIPawn pawnUI)
         {
             var currentPlayer = GameManager.Instance._game.currentPlayerTurn;
+
+            // ResetAllIndicatorPawn();
 
             if (!GameManager.Instance.isDiceRolled)
             {
@@ -128,12 +175,13 @@ namespace LudoGames.Unity.Pawns
                 return;
             }
 
+            // ResetAllIndicatorPawn();
+            // pawnUI.SetIndicator(true);
             pawnSelectedIndex = pawnUI.Id;
-            Debug.Log($"Pawn {currentPlayer.Name} {pawnSelectedIndex} selected");
-
             GameManager.Instance.ControlMovePawn(pawnSelectedIndex);
-        }
 
+            Debug.Log($"Pawn {currentPlayer.Name} {pawnSelectedIndex} selected");
+        }
 
         private void OnMovedPawn(IPawn pawn)
         {

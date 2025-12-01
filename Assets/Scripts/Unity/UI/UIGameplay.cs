@@ -10,6 +10,11 @@ namespace LudoGames.Unity.UI
         public TextMeshProUGUI player3NameUI;
         public TextMeshProUGUI player4NameUI;
 
+                public TextMeshProUGUI player1NameUI;
+        public TextMeshProUGUI player2NameUI;
+        public TextMeshProUGUI player3NameUI;
+        public TextMeshProUGUI player4NameUI;
+
         void Start()
         {
             player1NameUI.text = "Player 1 Name";

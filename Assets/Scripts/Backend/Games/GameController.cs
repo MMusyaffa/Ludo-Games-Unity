@@ -218,7 +218,7 @@ namespace LudoGames.Games.GameController
         public bool CanPlayerMovePawn(IPlayer player, int diceResult)
         {
             bool allPawnsHome = IsAllPawnsAtHome(player);
-            bool isIsAnyPawnOnBoard = IsAnyPawnOnBoard(player);
+            bool isAnyPawnOnBoard = IsAnyPawnOnBoard(player);
             bool isAnyPawnFinsih = IsAnyPawnFinish(player);
             
             if (allPawnsHome)
@@ -231,7 +231,7 @@ namespace LudoGames.Games.GameController
                 else return true;
             }
 
-            if (isAnyPawnFinsih && !isIsAnyPawnOnBoard)
+            if (isAnyPawnFinsih && !isAnyPawnOnBoard)
             {
                 if (diceResult != 6)
                 {
@@ -239,6 +239,19 @@ namespace LudoGames.Games.GameController
                     return false;
                 }
                 else return true;
+            }
+
+            foreach (var pawn in PlayerPawns[player])
+            {
+                if (IsPawnOnFinalPath(player, pawn))
+                {
+                    int lastPath = PlayerPaths[player].Count - 1 - pawn.PositionIndex;
+                    if (diceResult > lastPath)
+                    {
+                        Debug.Log($"Player {player.Name} tidak bisa jalan, dadu {diceResult} lebih dari sisa langkah {lastPath}");
+                        return false;
+                    }
+                }
             }
 
             return true;
