@@ -231,7 +231,7 @@ namespace LudoGames.Unity.GameManagers
 
             foreach (var player in _game.Players)
             {
-                if (_game.IsAllPlayerFinished(player))
+                if (_game.IsAllPawnsFinish(player))
                     playersFinishedAll++;
             }
 

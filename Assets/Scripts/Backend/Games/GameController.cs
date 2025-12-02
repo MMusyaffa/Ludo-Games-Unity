@@ -530,15 +530,9 @@ namespace LudoGames.Games.GameController
             return PlayerPawns[player].Any(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
         }
 
-        private bool IsAllPawnsFinish(IPlayer player)
+        public bool IsAllPawnsFinish(IPlayer player)
         {
             return PlayerPawns[player].All(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
-        }
-
-        public bool IsAllPlayerFinished(IPlayer player)
-        {
-            var pawns = PlayerPawns[player];
-            return pawns.All(p => p.PawnStatesEnum == PawnStatesEnum.Finished);
         }
 
         private void PlayerScoreLeaderboard()
